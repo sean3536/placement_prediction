@@ -13,7 +13,7 @@ import seaborn as sns
 # Load Dataset
 # =========================
 
-df = pd.read_csv("Placement_Data_Full_Class.csv")
+df = pd.read_csv("Placement_Data_Cleaned.csv")
 
 # =========================
 # Basic Data Inspection
