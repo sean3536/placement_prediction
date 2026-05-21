@@ -1,0 +1,73 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+ 
+df = pd.read_csv(r"C:\\Users\\saray\\OneDrive\\Desktop\\Project\\project\\placement_prediction\\Placement_Data_Cleaned (1).csv")
+ 
+numeric_cols = ['ssc_p', 'hsc_p', 'degree_p', 'etest_p', 'mba_p']
+col_labels = {
+    'ssc_p': 'SSC Score\n(10th Grade)',
+    'hsc_p': 'HSC Score\n(12th Grade)',
+    'degree_p': 'Degree Score\n(Undergrad)',
+    'etest_p': 'Employability\nTest Score',
+    'mba_p': 'MBA Score'
+}
+ 
+placed = df[df['status'] == 'Placed']
+not_placed = df[df['status'] == 'Not Placed']
+ 
+colors = {'Placed': '#2ecc71', 'Not Placed': '#e74c3c'}
+ 
+fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+fig.suptitle('Score Distributions: Placed vs Not Placed Students', fontsize=16, fontweight='bold', y=1.01)
+axes = axes.flatten()
+# --- KDE plots for each score ---
+for i, col in enumerate(numeric_cols):
+    ax = axes[i]
+ 
+    # KDE curves with fill
+    sns.kdeplot(placed[col], ax=ax, color=colors['Placed'], fill=True, alpha=0.4, label='Placed', linewidth=2)
+    sns.kdeplot(not_placed[col], ax=ax, color=colors['Not Placed'], fill=True, alpha=0.4, label='Not Placed', linewidth=2)
+ 
+    # Mean lines
+    p_mean = placed[col].mean()
+    np_mean = not_placed[col].mean()
+    gap = abs(p_mean - np_mean)
+ 
+    ax.axvline(p_mean, color=colors['Placed'], linestyle='--', linewidth=1.5, alpha=0.8)
+    ax.axvline(np_mean, color=colors['Not Placed'], linestyle='--', linewidth=1.5, alpha=0.8)
+ 
+    ax.set_title(f'{col_labels[col]}\n(Mean gap: {gap:.1f})', fontsize=11, fontweight='bold')
+    ax.set_xlabel('Score (%)', fontsize=10)
+    ax.set_ylabel('Density', fontsize=10)
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+ 
+# --- Gap summary bar chart (6th subplot) ---
+gaps = {col_labels[c].replace('\n', ' '): abs(placed[c].mean() - not_placed[c].mean()) for c in numeric_cols}
+sorted_gaps = dict(sorted(gaps.items(), key=lambda x: x[1], reverse=True))
+ 
+ax = axes[5]
+bars = ax.barh(list(sorted_gaps.keys()), list(sorted_gaps.values()),
+               color=['#e74c3c', '#e67e22', '#f1c40f', '#27ae60', '#3498db'])
+ax.set_title('Mean Score Gap\n(Placed - Not Placed)', fontsize=11, fontweight='bold')
+ax.set_xlabel('Gap (percentage points)', fontsize=10)
+ax.grid(True, alpha=0.3, axis='x')
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ 
+# Add value labels on bars
+for bar, val in zip(bars, sorted_gaps.values()):
+    ax.text(val + 0.2, bar.get_y() + bar.get_height() / 2, f'{val:.1f}', va='center', fontsize=9)
+ 
+plt.tight_layout()
+plt.savefig('score_distributions.png', dpi=150, bbox_inches='tight')
+plt.show()
+ 
+# --- Print summary ---
+print('Mean gap summary (Placed - Not Placed):')
+for col in numeric_cols:
+    g = placed[col].mean() - not_placed[col].mean()
+    print(f'  {col}: {g:.2f}')
